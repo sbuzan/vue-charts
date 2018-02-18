@@ -2,8 +2,7 @@ import _ from 'lodash'
 import {
   eventsBinder,
   googleChartsLoader as loadCharts,
-  makeDeferred,
-  propsWatcher
+  makeDeferred
 } from '../utils/index'
 
 const chartDeferred = makeDeferred()
@@ -29,12 +28,6 @@ let props = {
     type: String,
     default: () => {
       return 'LineChart'
-    }
-  },
-  chartEvents: {
-    type: Object,
-    default: () => {
-      return {}
     }
   },
   columns: {
@@ -69,6 +62,13 @@ let props = {
         }
       }
     }
+  },
+  timestamp: {
+    type: Date,
+    required: false,
+    default: () => {
+      return null
+    }
   }
 }
 
@@ -102,6 +102,13 @@ export default {
       hiddenColumns: []
     }
   },
+  watch: {
+    timestamp: function (newVal, oldVal) {
+      if (!_.isNil(oldVal)) {
+        this.drawChart()
+      }
+    }
+  },
   events: {
     redrawChart () {
       this.drawChart()
@@ -115,18 +122,15 @@ export default {
         // we don't want to bind props because it's a kind of "computed" property
         const watchProps = props
         delete watchProps.bounds
-
-        // watching properties
-        propsWatcher(self, watchProps)
-
-        // binding events
-        eventsBinder(self, self.chart, self.chartEvents)
       })
       .catch((error) => {
         throw error
       })
   },
   methods: {
+    onSelectionChanged () {
+      this.$emit('onSelectionChanged', this.chart.getSelection())
+    },
     /**
      * Initialize the datatable and add the initial data.
      *
@@ -205,10 +209,12 @@ export default {
       // Set the datatable on this instance
       self.dataTable = self.wrapper.getDataTable()
 
-      // After chart is built, set it on this instance and resolve the promise.
+      // After chart is built, set it on this instance and resolve the promise.     
       google.visualization.events.addOneTimeListener(self.wrapper, 'ready', () => {
         self.chart = self.wrapper.getChart()
         chartDeferred.resolve()
+        // binding events
+        eventsBinder(self, self.chart, {'select': self.onSelectionChanged})
       })
     },
 
@@ -219,7 +225,6 @@ export default {
      */
     drawChart () {
       let self = this
-
       // We don't have any (usable) data, or we don't have columns. We can't draw a chart without those.
       if ((!_.isEmpty(self.rows) && !_.isObjectLike(self.rows)) || _.isEmpty(self.columns)) {
         return

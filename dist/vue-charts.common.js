@@ -1,6 +1,6 @@
 /*!
  * vue-charts v0.2.1
- * (c) 2016 Hayden Bickerton
+ * (c) 2018 Hayden Bickerton
  * Released under the MIT License.
  */
 'use strict';
@@ -39,8 +39,10 @@ function eventsBinder(vue, googleChart, events) {
       // The chart is already ready, so this event missed it's chance.
       // We'll call it manually.
       eventCallback();
-    } else {
+    } else if (!_.isNil(googleChart) && !_.isNil(eventName) && !_.isNil(eventCallback)) {
       google.visualization.events.addListener(googleChart, eventName, eventCallback);
+    } else {
+      console.log('cannot bind event', googleChart, eventName, eventCallback);
     }
   }
 }
@@ -102,21 +104,6 @@ function googleChartsLoader() {
   return googlePromise.promise;
 }
 
-function propsWatcher(vue, props) {
-  /*
-    Watch our props. Every time they change, redraw the chart.
-   */
-  _.each(props, function (_ref, attribute) {
-    var type = _ref.type;
-
-    vue.$watch(attribute, function () {
-      vue.drawChart();
-    }, {
-      deep: _.isObject(type)
-    });
-  });
-}
-
 var chartDeferred = makeDeferred();
 
 var props = {
@@ -140,12 +127,6 @@ var props = {
     type: String,
     default: function _default() {
       return 'LineChart';
-    }
-  },
-  chartEvents: {
-    type: Object,
-    default: function _default() {
-      return {};
     }
   },
   columns: {
@@ -180,6 +161,13 @@ var props = {
         }
       };
     }
+  },
+  timestamp: {
+    type: Date,
+    required: false,
+    default: function _default() {
+      return null;
+    }
   }
 };
 
@@ -211,6 +199,13 @@ var Chart = {
     };
   },
 
+  watch: {
+    timestamp: function timestamp(newVal, oldVal) {
+      if (!_.isNil(oldVal)) {
+        this.drawChart();
+      }
+    }
+  },
   events: {
     redrawChart: function redrawChart() {
       this.drawChart();
@@ -222,18 +217,16 @@ var Chart = {
       // we don't want to bind props because it's a kind of "computed" property
       var watchProps = props;
       delete watchProps.bounds;
-
-      // watching properties
-      propsWatcher(self, watchProps);
-
-      // binding events
-      eventsBinder(self, self.chart, self.chartEvents);
     }).catch(function (error) {
       throw error;
     });
   },
 
   methods: {
+    onSelectionChanged: function onSelectionChanged() {
+      this.$emit('onSelectionChanged', this.chart.getSelection());
+    },
+
     /**
      * Initialize the datatable and add the initial data.
      *
@@ -315,10 +308,12 @@ var Chart = {
       // Set the datatable on this instance
       self.dataTable = self.wrapper.getDataTable();
 
-      // After chart is built, set it on this instance and resolve the promise.
+      // After chart is built, set it on this instance and resolve the promise.     
       google.visualization.events.addOneTimeListener(self.wrapper, 'ready', function () {
         self.chart = self.wrapper.getChart();
         chartDeferred.resolve();
+        // binding events
+        eventsBinder(self, self.chart, { 'select': self.onSelectionChanged });
       });
     },
 
@@ -330,7 +325,6 @@ var Chart = {
      */
     drawChart: function drawChart() {
       var self = this;
-
       // We don't have any (usable) data, or we don't have columns. We can't draw a chart without those.
       if (!_.isEmpty(self.rows) && !_.isObjectLike(self.rows) || _.isEmpty(self.columns)) {
         return;
