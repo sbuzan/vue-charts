@@ -106,75 +106,9 @@ function googleChartsLoader() {
 
 var chartDeferred = makeDeferred();
 
-var props = {
-  packages: {
-    type: Array,
-    default: function _default() {
-      return ['corechart'];
-    }
-  },
-  version: {
-    default: 'current'
-  },
-  mapsApiKey: {
-    default: false
-  },
-  language: {
-    type: String,
-    default: 'en'
-  },
-  chartType: {
-    type: String,
-    default: function _default() {
-      return 'LineChart';
-    }
-  },
-  columns: {
-    required: true,
-    type: Array
-  },
-  rows: {
-    type: Array,
-    default: function _default() {
-      return [];
-    }
-  },
-  options: {
-    type: Object,
-    default: function _default() {
-      return {
-        chart: {
-          title: 'Chart Title',
-          subtitle: 'Subtitle'
-        },
-        hAxis: {
-          title: 'X Label'
-        },
-        vAxis: {
-          title: 'Y Label'
-        },
-        width: '400px',
-        height: '300px',
-        animation: {
-          duration: 500,
-          easing: 'out'
-        },
-        colors: []
-      };
-    }
-  },
-  timestamp: {
-    type: Date,
-    required: false,
-    default: function _default() {
-      return null;
-    }
-  }
-};
-
 var Chart = {
   name: 'vue-chart',
-  props: props,
+  props: ['packages', 'version', 'mapsApiKey', 'language', 'chartType', 'columns', 'rows', 'options', 'timestamp'],
   render: function render(h) {
     var self = this;
     return h('div', { class: 'vue-chart-container' }, [h('div', {
@@ -196,14 +130,31 @@ var Chart = {
       chartId: 'X' + this._uid,
       wrapper: null,
       dataTable: [],
-      hiddenColumns: []
+      hiddenColumns: [],
+      googleLoaded: false
     };
   },
 
   watch: {
     timestamp: function timestamp(newVal, oldVal) {
-      if (!_.isNil(oldVal) && !_.isNil(this.chart) && !_.isNil(this.wrapper)) {
-        this.drawChart();
+      if (this.googleLoaded === true) {
+        if (!_.isNil(oldVal)) {
+          this.drawChart();
+        }
+      }
+    },
+    options: function options(newVal, oldVal) {
+      if (this.googleLoaded === true) {
+        if (!_.isNil(oldVal)) {
+          this.forceRedraw();
+        }
+      }
+    },
+    chartType: function chartType(newVal, oldVal) {
+      if (this.googleLoaded === true) {
+        if (!_.isNil(oldVal)) {
+          this.forceRedraw();
+        }
       }
     }
   },
@@ -214,16 +165,20 @@ var Chart = {
   },
   mounted: function mounted() {
     var self = this;
-    googleChartsLoader(self.packages, self.version, self.mapsApiKey, self.language).then(self.drawChart).then(function () {
-      // we don't want to bind props because it's a kind of "computed" property
-      // const watchProps = props
-      // delete watchProps.bounds
+    googleChartsLoader(self.packages, self.version, self.mapsApiKey, self.language).then(function () {
+      self.googleLoaded = true;
+      self.drawChart();
     }).catch(function (error) {
       throw error;
     });
   },
 
   methods: {
+    forceRedraw: function forceRedraw() {
+      this.wrapper = null;
+      this.chart = null;
+      this.drawChart();
+    },
     onSelectionChanged: function onSelectionChanged() {
       this.$emit('onSelectionChanged', this.chart.getSelection());
     },
