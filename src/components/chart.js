@@ -59,7 +59,8 @@ let props = {
         animation: {
           duration: 500,
           easing: 'out'
-        }
+        },
+        colors: []
       }
     }
   },
@@ -120,8 +121,8 @@ export default {
       .then(self.drawChart)
       .then(() => {
         // we don't want to bind props because it's a kind of "computed" property
-        const watchProps = props
-        delete watchProps.bounds
+        // const watchProps = props
+        // delete watchProps.bounds
       })
       .catch((error) => {
         throw error

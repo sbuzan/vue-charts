@@ -161,7 +161,8 @@
           animation: {
             duration: 500,
             easing: 'out'
-          }
+          },
+          colors: []
         };
       }
     },
@@ -218,8 +219,8 @@
       var self = this;
       googleChartsLoader(self.packages, self.version, self.mapsApiKey, self.language).then(self.drawChart).then(function () {
         // we don't want to bind props because it's a kind of "computed" property
-        var watchProps = props;
-        delete watchProps.bounds;
+        // const watchProps = props
+        // delete watchProps.bounds
       }).catch(function (error) {
         throw error;
       });
