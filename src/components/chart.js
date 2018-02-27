@@ -104,7 +104,7 @@ export default {
   },
   watch: {
     timestamp: function (newVal, oldVal) {
-      if (!_.isNil(oldVal)) {
+      if (!_.isNil(oldVal) && !_.isNil(this.chart) && !_.isNil(this.wrapper)) {
         this.drawChart()
       }
     }

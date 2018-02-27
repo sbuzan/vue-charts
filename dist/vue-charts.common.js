@@ -201,7 +201,7 @@ var Chart = {
 
   watch: {
     timestamp: function timestamp(newVal, oldVal) {
-      if (!_.isNil(oldVal)) {
+      if (!_.isNil(oldVal) && !_.isNil(this.chart) && !_.isNil(this.wrapper)) {
         this.drawChart();
       }
     }
