@@ -58,16 +58,12 @@
 
   function googleChartsLoader() {
     var packages = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : ['corechart'];
-    var version = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 42;
+    var version = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '42';
     var mapsApiKey = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
     var language = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 'en';
 
     if (!Array.isArray(packages)) {
       throw new TypeError('packages must be an array');
-    }
-
-    if (version !== 'current' && typeof version !== 'number' && version !== 'upcoming') {
-      throw new TypeError('version must be a number, "upcoming" or "current"');
     }
 
     // Google only lets you load it once, so we'll only run once.
