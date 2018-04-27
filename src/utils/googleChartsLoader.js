@@ -5,7 +5,7 @@ let isLoaded = false
 // Our main promise
 let googlePromise = makeDeferred()
 
-export function googleChartsLoader (packages = ['corechart'], version = 'current', mapsApiKey = false, language = 'en') {
+export function googleChartsLoader (packages = ['corechart'], version = 42, mapsApiKey = false, language = 'en') {
   if (!Array.isArray(packages)) {
     throw new TypeError('packages must be an array')
   }
